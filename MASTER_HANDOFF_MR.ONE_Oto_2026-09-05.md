@@ -1,941 +1,353 @@
-# MASTER HANDOFF — MR.ONE_Oto
-
-Tanggal: 5 September 2026  
-Nama proyek: MR.ONE_Oto  
-Jenis: Automotive Media Publishing / Content Studio  
-Status: Rebuild di AppDeploy baru — belum dideploy pada sesi tujuan  
-Source of Truth: Blueprint + implementasi/handoff MR.ONE_Oto yang sudah ada dalam percakapan ini
-
-## 1. TUJUAN PROYEK
-
-MR.ONE_Oto adalah sistem operasional untuk membuat konten promosi kendaraan dari data/media kendaraan.
-
-Alur utama:
-
-Input kendaraan → Media → Review → AI Processing → Content → Review/Approval → Schedule → Publishing → History
-
-Sistem harus sederhana, modular, dan mengutamakan komponen gratis jika memungkinkan.
-
-Jangan melakukan redesign blueprint tanpa technical blocker.
-
-## 2. BATASAN PROYEK
-
-MR.ONE_Oto hanya untuk:
-
-- kendaraan / automotive
-- pembuatan konten promosi kendaraan
-- image workflow
-- video workflow
-- review konten
-- scheduling
-- publishing
-- operational history
-
-Bukan bagian proyek ini:
-
-- marketplace affiliate workflow
-- Tokopedia/Shopee/Lazada workflow
-- BOT Trading AI
-- Coinrule
-- R2
-- proyek MR.ONE Content Studio V1
-
-Jangan mencampurkan proyek-proyek tersebut.
-
-## 3. ARSITEKTUR FINAL
-
-### Application
-
-MR.ONE_Oto
-
-### Backend / Operational Layer
-
-AppDeploy
-
-AppDeploy digunakan sebagai backend/operasional teknis aplikasi.
-
-### Database + Storage
-
-Supabase
-
-Supabase adalah:
-
-- Database
-- Storage
-- Source of Truth
-
-Project Supabase yang sudah digunakan:
-
-`dtvpjgprxpmkxfztyfrx`
-
-URL:
-
-`https://dtvpjgprxpmkxfztyfrx.supabase.co`
-
-Credential Supabase yang sudah terhubung secara aman:
-
-`SUPABASE_PUBLISHABLE_KEY`
-
-Jangan meminta user menempelkan secret/key ke chat.
-
-## 4. KONDISI APPDEPLOY
-
-Ada AppDeploy baru.
-
-Pada koneksi AppDeploy baru yang sudah dicek:
-
-`apps: []`
-
-Artinya belum ada aplikasi yang terlihat pada koneksi tersebut.
-
-Interpretasi yang benar:
-
-AppDeploy baru belum memiliki app MR.ONE_Oto.
-
-Jangan mengklaim app lama sudah berpindah.
-
-App lama:
-
-`mr-one-content-studio-publisher-tgt77z`
-
-adalah app lama dan deployment quota-nya sudah habis.
-
-Jangan menggunakan app lama untuk rebuild ini.
-
-Targetnya adalah:
-
-membuat ulang MR.ONE_Oto sebagai app baru pada AppDeploy baru.
-
-## 5. DATABASE SUPABASE
-
-Required tables yang sudah diverifikasi:
-
-- posts
-- post_products
-- products
-- media_assets
-- content_builds
-- music_library
-- platform_variants
-- publishing
-
-Semua table tersebut sudah tersedia.
-
-RLS sudah aktif pada:
-
-- products
-- media_assets
-- platform_variants
-- publishing
-- posts
-- post_products
-- content_builds
-- music_library
-
-Tidak ada critical security lint yang ditemukan.
-
-Performance advisor hanya menunjukkan beberapa informasi mengenai:
-
-- FK yang belum memiliki index
-- beberapa unused indexes
-
-Tidak ada alasan untuk redesign database sekarang.
-
-## 6. STORAGE
-
-Bucket khusus MR.ONE_Oto:
-
-`mr-one-oto-originals`
-
-Konfigurasi:
-
-- public: true
-- maximum file size: 100 MB
-- MIME: image/png, image/jpeg, image/webp, video/mp4
-
-Storage policy yang sudah diperkeras:
-
-### Public read
-
-Hanya object dengan:
-
-`bucket_id = 'mr-one-oto-originals'`
-
-dan:
-
-`name like 'mr-one-oto/%'`
-
-### Upload
-
-Anon/authenticated boleh INSERT hanya ke:
-
-`mr-one-oto-originals`
-
-dan path:
-
-`mr-one-oto/%`
-
-### Delete
-
-Tidak ada broad anonymous DELETE policy.
-
-Jangan mengembalikan broad anon DELETE hanya untuk memperbaiki cleanup.
-
-## 7. MEDIA RULE
-
-Setiap posting:
-
-maksimal 5 media
-
-Media dapat berupa:
-
-- IMAGE
-- VIDEO
-
-IMAGE dan VIDEO harus mempunyai workflow terpisah.
-
-Media diikat ke product melalui `media_assets.product_id`.
-
-## 8. PRODUCT
-
-Product kendaraan memiliki data utama:
-
-- product name
-- price
-- specifications
-- features
-- benefits
-- workflow type
-- status
-- confidence
-
-Status awal:
-
-`Draft`
-
-### Penting
-
-Schema `products` yang sekarang tidak boleh diasumsikan memiliki field `category`.
-
-Jangan menambahkan category hanya karena source AppDeploy lama pernah menggunakannya.
-
-Jika membutuhkan field baru, cek schema terlebih dahulu.
-
-## 9. POST
-
-Post memiliki konsep:
-
-- title
-- workflow_type
-- status
-- whatsapp_number
-- whatsapp_filled_at
-- generated_caption
-- generated_cta
-- master_video_url
-- master_video_storage_path
-- master_image_url
-- master_image_storage_path
-- content_state
-- scheduled_at
-- music_id
-- reset_version
-
-Post juga terhubung ke product melalui:
-
-`post_products`
-
-## 10. WHATSAPP RULE
-
-WhatsApp adalah metadata posting.
-
-Aturan:
-
-1 posting = 1 nomor WhatsApp
-
-WhatsApp bukan vehicle fact.
-
-AI tidak boleh menggunakan nomor WhatsApp sebagai fakta kendaraan.
-
-UI harus tetap menyediakan:
-
-WhatsApp
-
-Dengan konsep:
-
-Nomor WhatsApp diatur sekali untuk posting ini.
-
-## 11. PRODUCT FORM
-
-Form kendaraan minimal:
-
-### Nama kendaraan
-
-Contoh:
-
-Toyota Avanza 1.5 G
-
-### Harga
-
-Harga kendaraan.
-
-### Keterangan
-
-Keterangan dari user mengenai kendaraan.
-
-### Workflow
-
-Pilih:
-
-- IMAGE
-- VIDEO
-
-## 12. KETERANGAN
-
-Field Keterangan memang diminta user.
-
-Schema product saat ini tidak memiliki field khusus description.
-
-Jangan sembarangan mengubah schema.
-
-Untuk sementara, informasi Keterangan harus disimpan menggunakan struktur yang sudah tersedia dan sesuai blueprint, terutama:
-
-`posts.content_state`
-
-atau struktur existing yang memang ditujukan untuk content state.
-
-Jangan mengubah makna specifications hanya untuk menampung Keterangan jika itu menyebabkan data menjadi semantically incorrect.
-
-## 13. CURRENT UI FOUNDATION
-
-UI terakhir yang sudah dibuat memiliki:
-
-- Dashboard
-- Image Studio
-- Video Studio
-- AI Processing
-- Review
-- Schedule Queue
-- Calendar
-- Posting History
-
-Bagian yang belum selesai masih dapat berupa placeholder/disabled sesuai tahap implementasi.
-
-UI sudah memiliki:
-
-- Product form
-- Product selection
-- WhatsApp
-- Image upload
-- Video upload
-- persistence checklist
-
-Namun implementasi belum lengkap.
-
-## 14. CURRENT MEDIA UPLOAD
-
-Endpoint:
-
-`mr-one-media-upload_POST.ts`
-
-Fungsi:
-
-- membutuhkan productId
-- memastikan product exists
-- maksimal 5 files
-- menerima: name, type, base64
-- upload ke Supabase Storage
-- insert ke media_assets
-- mengembalikan metadata upload
-
-Jenis:
-
-- png
-- jpeg
-- webp
-- mp4
-
-Bucket yang benar:
-
-`mr-one-oto-originals`
-
-## 15. MEDIA UPLOAD KNOWN LIMITATIONS
-
-Masih ada robustness issue:
-
-1. DB insert gagal setelah storage upload
-   - Object storage dapat menjadi orphan.
-
-2. Multi-file upload partial failure
-   - Sebagian object dapat sudah terupload sebelum error.
-
-3. Base64 video
-   - Bisa membutuhkan memory besar.
-
-4. Endpoint belum melakukan explicit file-size validation
-   - Bucket sendiri memiliki limit 100 MB.
-
-Jangan menyelesaikan masalah ini dengan broad anonymous DELETE policy.
-
-## 16. PRODUCT SAVE CURRENT STATE
-
-Endpoint:
-
-`mr-one-products_POST.ts`
-
-Saat ini insert:
-
-- product_name
-- price
-- specifications
-- features
-- benefits
-- workflow_type
-- status
-- confidence
-
-UI saat ini menyimpan:
-
-- product_name
-- price
-- specifications: [description]
-- workflow_type
-
-Ini diketahui sebagai mapping sementara yang belum ideal.
-
-Perlu diperbaiki agar Keterangan tidak dipaksakan menjadi specification.
-
-## 17. POST CREATION
-
-Endpoint yang sudah tersedia:
-
-`mr-one-posts_POST.ts`
-
-Membuat post dengan:
-
-- title
-- workflow_type
-- status
-- whatsapp_number
-- generated_caption = null
-- generated_cta = null
-- scheduled_at = null
-- content_state = {}
-- reset_version = 0
-
-Namun UI terakhir belum benar-benar menjalankan alur lengkap:
-
-save post → product → post_products → media
-
-Ini adalah salah satu titik implementasi berikutnya.
-
-## 18. RESET RULES
-
-Ini WAJIB dipertahankan.
-
-### Reset Product
-
-Reset Product:
-
-- menghapus/reset product-related state
-- menghapus/reset hubungan product/content build yang terkait
-- tidak menghapus posting secara keseluruhan
-- tidak menghapus hal yang memang ditetapkan tetap oleh blueprint
-
-Tujuannya:
-
-jika data kendaraan salah dimasukkan, user dapat mengganti produk.
-
-### Reset Content
-
-Reset Content:
-
-- mempertahankan product
-- mempertahankan media
-- mempertahankan WhatsApp
-- mempertahankan schedule
-- hanya reset content-generation/content state
-
-Tujuannya:
-
-mengulang pembuatan konten tanpa harus menginput kendaraan dan media dari awal.
-
-## 19. AI RULE
-
-AI harus:
-
-hanya menggunakan fakta kendaraan yang terlihat / diberikan / sudah direview.
-
-AI tidak boleh:
-
-- mengarang spesifikasi
-- mengarang fitur
-- mengarang benefit
-- mengarang tahun kendaraan
-- mengarang mileage
-- mengarang mesin
-- mengarang transmisi
-- mengarang kondisi kendaraan
-- mengarang harga
-
-Jika informasi tidak tersedia:
-
-jangan dibuat-buat.
-
-## 20. AI EXTRACTION
-
-Workflow AI extraction:
-
-Media kendaraan → AI membaca → structured vehicle facts → User Review/Edit → Approved Facts
-
-AI extraction sebelumnya dirancang menghasilkan:
-
-- product_name
-- price
-- specifications
-- features
-- benefits
-- confidence
-
-Jika ada data yang tidak terlihat:
-
-jangan ditebak.
-
-## 21. REVIEW
-
-Review adalah gate penting.
+# MASTER BASELINE — MR.ONE — OTO & AFFILIATE
+
+Tanggal: 5 September 2026
+Status: BASELINE FINAL — dasar implementasi
+
+## 1. TUJUAN
+MR.ONE adalah satu tool sederhana dengan hanya dua mode: OTO dan AFFILIATE.
+Semua konten berupa video final yang dibuat di luar MR.ONE dan maksimal 20 detik.
+MR.ONE tidak membuat video, tidak membuat slideshow, tidak membaca screenshot marketplace, dan tidak mempunyai IMAGE mode aktif.
+
+## 2. MODE OTO
+OTO khusus kendaraan.
+Input utama:
+- Merk
+- Tipe/Model
+- Tahun
+- No. HP
+- Upload 1 video final
+- Judul
+- Deskripsi
+- Kategori
 
 Alur:
+Input → Upload Video → bantu isi metadata → Review → Approval → Schedule → Publish → History.
 
-AI Extraction → Review/Edit → Approval → Copy Generation
+OTO tidak mempunyai affiliate_link. Affiliate link harus tetap NULL/tidak digunakan untuk OTO.
+Tidak ada perubahan konsep OTO dari rencana yang telah disepakati.
 
-User harus dapat melihat dan mengoreksi data AI sebelum data digunakan untuk membuat caption/content.
+## 3. MODE AFFILIATE
+AFFILIATE adalah mode promosi produk dengan 1 video final per produk, maksimal 20 detik.
+Input utama:
+- Produk
+- Affiliate link
+- Upload 1 video final
+- Judul
+- Deskripsi
+- Kategori
 
-## 22. COPY GENERATION
+ChatGPT membantu user mengisi Judul, Deskripsi, dan Kategori berdasarkan informasi yang diberikan user. AI media generation/extraction bukan bagian dari MR.ONE.
 
-AI copy menggunakan hanya:
+Affiliate link boleh berasal dari Shopee, Lazada, Tokopedia, atau TikTok Shop.
+Platform tersebut adalah sumber/tujuan affiliate link, BUKAN publishing channel MR.ONE.
 
-- approved vehicle facts
-- posting context
+## 4. PRODUKSI MEDIA
+User membuat video sendiri di luar MR.ONE.
+Video dibuat netral agar tidak terlihat sebagai materi marketplace tertentu.
+MR.ONE hanya menerima FINAL VIDEO.
 
-WhatsApp hanya sebagai contact metadata.
+Tidak ada di dalam MR.ONE:
+- screenshot marketplace sebagai input produksi
+- image recognition untuk produk
+- image cleaning
+- slideshow generation
+- video generation
+- voice generation
+- music generation
+- affiliate-link analysis untuk membuat media
 
-AI menghasilkan:
+## 5. MEDIA STANDARD
+Satu produk = satu video final.
+Master yang direkomendasikan:
+- MP4
+- 9:16
+- 1080 × 1920
+- maksimal 20 detik
 
-- caption
-- CTA
+Batas upload internal MR.ONE: maksimal 20 MB per video.
+Maksimal 1 video per produk/post.
 
-Caption harus sederhana, natural, dan promotional.
+## 6. CHANNEL PUBLISHING
+Publishing channel hanya:
+- TikTok
+- Facebook
+- YouTube
 
-Tidak boleh membuat vehicle facts baru.
+Shopee, Lazada, Tokopedia, dan TikTok Shop bukan publishing channel.
+TikTok dan TikTok Shop harus diperlakukan sebagai dua entitas berbeda.
 
-## 23. MUSIC
-
-Tersedia table:
-
-`music_library`
-
-Blueprint sebelumnya meminta pilihan background music instrumental gratis.
-
-Target:
-
-3 pilihan musik instrumental gratis.
-
-Jangan menjadikan music system kompleks.
-
-## 24. IMAGE WORKFLOW
-
-IMAGE workflow terpisah dari VIDEO.
-
-Konsep:
-
-Product → Image Media → AI/Content Processing → Review → Master Image → Schedule → Publish
-
-## 25. VIDEO WORKFLOW
-
-VIDEO workflow terpisah.
-
-Konsep:
-
-Product → Video Media → AI/Content Processing → Review → Master Video → Schedule → Publish
-
-Target video sederhana sekitar:
-
-20 detik
-
-Tidak perlu membuat video production system kompleks.
-
-## 26. PUBLISHING
-
-Blueprint publishing terakhir:
-
-### Facebook
-
-Direct publishing.
-
-### YouTube
-
-Menggunakan Buffer.
+## 7. ATURAN AFFILIATE PER CHANNEL
+Untuk mode AFFILIATE:
 
 ### TikTok
+- Publish video.
+- Affiliate link TIDAK dimasukkan ke caption/deskripsi.
+- TikTok dipakai sebagai channel penyebaran informasi/viewers.
+- MR.ONE tidak menjadikan TikTok sebagai channel monetisasi affiliate-link.
+- Tidak adanya link tidak berarti konten otomatis non-komersial; jika konten memenuhi kondisi disclosure platform, disclosure komersial tetap harus dilakukan.
 
-Menggunakan Buffer.
+### Facebook
+- Publish video.
+- Affiliate link dimasukkan ke deskripsi/caption sesuai format yang digunakan MR.ONE.
+- Jika disclosure komersial diperlukan oleh kebijakan Meta, jangan dihilangkan.
 
-Jangan menghapus/mengganti publishing architecture ini tanpa technical blocker.
+### YouTube
+- Publish video.
+- Affiliate link dimasukkan ke deskripsi.
+- Jika disclosure komersial/affiliate diperlukan, ikuti mekanisme disclosure YouTube yang berlaku.
 
-## 27. SCHEDULE
+Aturan utama: TikTok = video tanpa affiliate link; Facebook dan YouTube = video dengan affiliate link.
 
-Posting harian konsisten:
+## 8. OTO PER CHANNEL
+Untuk OTO:
+- TikTok: video.
+- Facebook: video.
+- YouTube: video.
 
-09:00 WIB
+Tidak ada affiliate link di OTO.
 
-Platform pertama
+## 9. PEMBAGIAN TUGAS
+### User
+- Menyiapkan video final.
+- Mengisi data produk/kendaraan dan affiliate link bila mode AFFILIATE.
+- Melakukan review dan approval.
 
-09:05 WIB
+### ChatGPT
+- Membantu mengisi Judul.
+- Membantu mengisi Deskripsi.
+- Membantu mengisi Kategori.
+- Tidak mengarang fakta yang tidak diberikan user.
 
-Platform kedua
+### MR.ONE
+- Form input.
+- Upload dan penyimpanan video.
+- Penyimpanan metadata.
+- Review/Approval.
+- Scheduling.
+- Publishing orchestration.
+- History.
+- Reset Product.
+- Reset Content.
 
-09:10 WIB
+### Supabase
+- Database.
+- Storage.
+- Source of Truth.
 
-Platform ketiga
+Supabase tidak perlu dipasangi AI.
 
-Jadwal harus persistent.
+### Supabase Edge Functions
+Digunakan sebagai server-side integration layer bila diperlukan untuk komunikasi aman dengan Buffer/API.
+Secret/API key tidak boleh ditaruh di browser/frontend atau ditempelkan user ke chat.
 
-Schedule → state machine → retry/idempotency → operational logs.
+### Buffer
+Jalur publishing untuk channel sosial yang terhubung, termasuk TikTok, Facebook, dan YouTube sesuai koneksi/kemampuan akun yang tersedia.
+Jangan menganggap marketplace sebagai channel Buffer.
 
-## 28. PUBLISHING STATE
+## 10. AI SCOPE
+AI tidak membuat media.
+AI hanya membantu metadata percakapan: Judul, Deskripsi, Kategori.
+AI wajib hanya memakai fakta yang diberikan/ditetapkan user.
+AI tidak boleh mengarang:
+- spesifikasi
+- fitur
+- harga
+- tahun
+- mileage
+- mesin
+- transmisi
+- kondisi
+- benefit faktual yang tidak diberikan
 
-Publishing perlu mempunyai state machine yang jelas.
+Jika fakta tidak tersedia, gunakan bahasa netral atau minta data yang diperlukan; jangan menebak.
 
-Minimal konsep:
+## 11. DATABASE BASELINE
+Gunakan Supabase yang sudah ada sebagai fondasi, tanpa membuat proyek database baru.
+Pisahkan domain dengan field/aturan yang tegas:
+- mode = OTO | AFFILIATE
 
+Aturan data:
+- OTO → affiliate_link NULL/tidak digunakan.
+- AFFILIATE → affiliate_link boleh diisi.
+
+Affiliate source/destination dan publishing channel adalah konsep berbeda.
+Jika diperlukan untuk implementasi, simpan sumber affiliate secara eksplisit, misalnya Shopee/Lazada/Tokopedia/TikTok Shop, tanpa memasukkannya ke daftar publishing platform.
+
+Schema lama boleh tetap ada untuk kompatibilitas/migrasi, tetapi IMAGE/AI media-generation fields tidak boleh menjadi workflow aktif.
+Jangan menghapus data lama secara membabi buta.
+
+## 12. DATA YANG AKTIF
+Workflow aktif berfokus pada:
+- posts
+- products/items
+- post_products bila masih diperlukan untuk relasi
+- media_assets untuk final video
+- publishing
+- platform/channel configuration
+
+Field lama seperti master_image, clean_image, content_builds, music_library, dan workflow IMAGE dapat dipertahankan sementara untuk backward compatibility, tetapi tidak digunakan oleh workflow baru.
+
+Untuk workflow baru, 1 post/product = 1 final video.
+
+## 13. STORAGE
+Bucket Supabase yang sudah digunakan:
+`mr-one-oto-originals`
+
+Video aktif:
+- MP4
+- maksimal 20 MB pada validasi aplikasi
+- 1 video per post/product
+
+Storage policy harus tetap least-privilege. Jangan membuat broad anonymous DELETE hanya untuk cleanup.
+
+Jika upload database insert gagal setelah storage upload, implementasikan cleanup server-side/transactional compensation tanpa membuka DELETE publik.
+
+## 14. PERSISTENCE
+Semua state penting harus persistent di Supabase:
+- product/item
+- mode
+- title
+- description
+- category
+- affiliate link jika AFFILIATE
+- video path/public URL
+- WhatsApp untuk OTO
+- review/approval state
+- schedule
+- publishing state
+- error/retry information
+- history
+
+Jangan menjadikan browser/local state sebagai source of truth.
+
+## 15. RESET
+### Reset Product
+Memungkinkan user mengganti produk/data yang salah tanpa menghapus keseluruhan posting secara tidak perlu.
+
+### Reset Content
+Memungkinkan pengulangan content metadata/state tanpa harus mengulang data dasar yang masih benar.
+
+Reset harus menjaga data yang memang ditetapkan tetap dan tidak merusak schedule/publishing yang tidak terkait.
+
+## 16. PUBLISHING STATE
+Per channel harus independen.
+Minimal:
 - queued
 - publishing
 - published
 - failed
 - retry
 
-Platform harus independen.
-
-Kegagalan satu platform tidak boleh secara otomatis membuat platform lain dianggap gagal.
-
-## 29. OPERATIONAL PRINCIPLES
-
-Gunakan:
-
-- persistence
-- state machine
-- retry
-- idempotency
-- operational logging
-
-Tetapi tetap sederhana.
-
-Jangan membangun queue infrastructure yang berlebihan jika Supabase/AppDeploy sudah cukup.
-
-## 30. EXISTING VERIFICATION ENDPOINTS
-
-Health:
-
-`/api/mr-one-health`
-
-Expected:
-
-`ok = true`  
-`provider = supabase`  
-`sourceOfTruth = true`  
-`missingSecret = false`
-
-Schema:
-
-`/api/mr-one-schema-status`
-
-Expected semua:
-
-`posts = true`  
-`post_products = true`  
-`products = true`  
-`media_assets = true`  
-`content_builds = true`  
-`music_library = true`  
-`platform_variants = true`  
-`publishing = true`
-
-Products:
-
-`/api/mr-one-products`
-
-Posts:
-
-`/api/mr-one-posts`
-
-Saat terakhir diverifikasi:
-
-`products = []`  
-`posts = []`
-
-## 31. OPENAI CREDENTIAL
-
-OpenAI credential belum terhubung.
-
-Secure connection request:
-
-Job ID:
-
-`1ebf01cc-60bd-4aa2-9cec-134471aea54f`
-
-Secure connection:
-
-`https://floot.com/mcp-connect?request=1ebf01cc-60bd-4aa2-9cec-134471aea54f`
-
-Jangan meminta API key ditempelkan ke chat.
-
-AI implementation dilakukan setelah foundation persistence siap.
-
-## 32. FLOOT PROJECT
-
-Floot project yang sebelumnya menjadi foundation:
-
-MR.ONE_Oto
-
-Project ID:
-
-`4d7b0fc8-0c07-494b-aabd-a501b4f202ab`
-
-Internal API:
-
-`https://4d7b0fc8-0c07-494b-aabd-a501b4f202ab.sandbox.floot.app`
-
-Foundation source sudah pernah dimigrasikan dari AppDeploy lama.
-
-File penting:
-
-- `endpoints/mr-one-posts_GET.ts`
-- `endpoints/mr-one-health_GET.ts`
-- `endpoints/mr-one-posts_POST.ts`
-- `pages/_index.tsx`
-- `pages/_index.module.css`
-- `endpoints/mr-one-products_GET.ts`
-- `endpoints/mr-one-schema-status_GET.ts`
-- `endpoints/mr-one-media-upload_POST.ts`
-
-Floot project ini adalah reference/foundation.
-
-Tetapi target sekarang:
-
-rebuild MR.ONE_Oto pada AppDeploy baru menggunakan source/handoff yang sudah ada.
-
-## 33. CURRENT EXACT CONTINUATION POINT
-
-Jangan mulai dari blueprint lagi.
-
-Blueprint sudah final.
-
-Titik lanjut:
-
-### PHASE A — Persistence Foundation
-
-Implementasikan:
-
-- Product creation
-- Post creation
-- Post ↔ Product relation
-- Keterangan persistence
-- WhatsApp persistence
-- Media persistence
-- Reset Product
-- Reset Content
-
-Kemudian:
-
-### PHASE B — Review / AI
-
-- AI extraction
-- Review/Edit extracted facts
-- Approved facts
-- Caption + CTA generation
-
-Kemudian:
-
-### PHASE C — Content
-
-- Image workflow
-- Video workflow
-- Master media
-
-Kemudian:
-
-### PHASE D — Scheduling
-
-- Persistent schedule
-- Queue
-- State machine
-- Retry
-- Idempotency
-- Operational logs
-
-Kemudian:
-
-### PHASE E — Publishing
-
-- Facebook direct
-- YouTube via Buffer
-- TikTok via Buffer
-- Platform-independent status
-- Posting history
-
-## 34. FIRST IMPLEMENTATION TASK
-
-Saat AppDeploy tersedia:
-
-### Task 1
-
-Buat app baru:
-
-`MR.ONE_Oto`
-
-Jangan menggunakan:
-
-`mr-one-content-studio-publisher-tgt77z`
-
-karena itu app lama.
-
-### Task 2
-
-Rebuild foundation berdasarkan source/handoff ini.
-
-### Task 3
-
-Pastikan Supabase menjadi source of truth.
-
-### Task 4
-
-Implementasikan Product + Post + post_products.
-
-### Task 5
-
-Implementasikan:
-
-- Reset Product
-- Reset Content
-
-### Task 6
-
-Implementasikan media 1–5.
-
-### Task 7
-
-Typecheck.
-
-### Task 8
-
-Run endpoint/database verification.
-
-### Task 9
-
-Buat checkpoint setelah unit persistence stabil.
-
-## 35. ATURAN OPERASIONAL UNTUK ASSISTANT
-
-Assistant yang menerima handoff ini harus:
-
-- Jangan mengarang akses.
-- Jangan mengklaim AppDeploy sudah terhubung jika tool belum tersedia.
-- Jangan mengklaim deployment berhasil tanpa hasil deployment.
-- Jangan mengklaim database berubah tanpa hasil Supabase.
-- Jangan meminta secret/API key melalui chat.
-- Jangan redesign blueprint.
-- Jangan mencampurkan MR.ONE_Oto dengan proyek lain.
-- Jangan menghapus data production tanpa instruksi eksplisit.
-- Jangan membuat app baru di AppDeploy lama.
-- Jangan menggunakan R2.
-- Jangan menambahkan dependency yang tidak diperlukan.
-- Gunakan Supabase sebagai source of truth.
-- Setelah perubahan, lakukan typecheck/testing.
-- Jika ada technical blocker, jelaskan blocker secara spesifik.
-- Jika akses tool tidak tersedia, berhenti pada batas akses tersebut dan jelaskan apa yang harus dilakukan user.
-
-## 36. HANDOFF VERIFICATION REQUIRED
-
-Assistant di chat tujuan harus terlebih dahulu menyatakan:
-
-### Pemahaman
-
-Bahwa proyek yang dilanjutkan adalah:
-
-`MR.ONE_Oto`
-
-dan bukan:
-
-- MR.ONE Content Studio V1
-- BOT Trading AI
-- Coinrule
-
-### Akses aktual
-
-Harus menyebutkan apakah secara teknis tersedia:
-
-- AppDeploy
-- Supabase
-- Floot source project
-
-### Limitasi
-
-Jika tool tidak tersedia, harus mengatakan secara eksplisit.
-
-### Continuation point
-
-Harus melanjutkan dari:
-
-Persistence Foundation → Product/Post/Post_Product → Reset → Media
-
-bukan mengulang blueprint.
-
-## 37. DEFINITION OF DONE UNTUK FOUNDATION
-
-Foundation dianggap selesai jika:
-
-- Product dapat disimpan
-- Post dapat disimpan
-- Product terhubung ke Post
-- WhatsApp tersimpan pada Post
-- Keterangan tersimpan dengan benar
-- Media dapat disimpan
-- Maksimal 5 media enforced
-- IMAGE/VIDEO workflow terpisah
-- Reset Product bekerja
-- Reset Content bekerja
-- Data tetap ada setelah refresh
-- Supabase menjadi source of truth
-- Typecheck bersih
-- Endpoint verification berhasil
-
-Baru setelah itu lanjut ke AI.
-
-## 38. STATUS SAAT HANDOFF DIBUAT
-
-- Blueprint: FINAL / LOCKED
-- Supabase: FOUNDATION READY
-- Storage: READY
-- Media endpoint: EXISTING / NEED ROBUSTNESS LATER
-- Product persistence: PARTIAL
-- Post persistence: PARTIAL
-- Post ↔ Product: BELUM SELESAI DI UI
-- WhatsApp persistence: BELUM SELESAI DI UI
-- Reset Product: BELUM SELESAI
-- Reset Content: BELUM SELESAI
-- AI: BELUM DILANJUTKAN
-- Review/Edit AI facts: BELUM DILANJUTKAN
-- Scheduling: BELUM DILANJUTKAN
-- Publishing: BELUM DILANJUTKAN
-- AppDeploy baru: BELUM MEMILIKI APP MR.ONE_Oto
-
-## 39. INSTRUKSI MULAI DI CHAT BARU
-
-Setelah handoff ini ditempel ke chat baru, gunakan prompt:
-
-> “Verifikasi handoff ini. Jangan mengarang akses. Sebutkan akses AppDeploy/Supabase yang benar-benar tersedia di chat ini. Jika AppDeploy tersedia, langsung mulai rebuild MR.ONE_Oto dari Persistence Foundation. Jika tidak tersedia, berhenti dan beri tahu saya tepatnya apa yang harus saya lakukan.”
-
----
-
-**END OF MASTER HANDOFF**
+Kegagalan TikTok tidak boleh membuat Facebook/YouTube dianggap gagal.
+Publishing harus idempotent agar retry tidak membuat duplikasi.
+Simpan external post ID/Buffer post ID bila tersedia.
+
+## 17. SCHEDULING
+Scheduling harus persistent.
+Default jadwal yang pernah dipakai tetap dapat menjadi preset, tetapi waktu/platform tidak boleh dianggap sebagai fakta bisnis yang tidak bisa diubah.
+User dapat memilih schedule.
+Per channel mempunyai status sendiri.
+
+## 18. CAPTION GENERATION LOGIC
+MR.ONE tidak perlu mempunyai AI service internal untuk membuat caption.
+ChatGPT membantu user secara percakapan.
+Hasil yang sudah disetujui user kemudian disimpan ke Supabase.
+
+Caption final harus dapat berbeda per channel:
+- TikTok AFFILIATE: tanpa affiliate link.
+- Facebook AFFILIATE: dengan affiliate link.
+- YouTube AFFILIATE: dengan affiliate link.
+- OTO: tanpa affiliate link di semua channel.
+
+Affiliate link tidak boleh dipakai sebagai media URL.
+
+## 19. DISCLOSURE
+Sistem tidak boleh menyimpulkan bahwa tidak adanya affiliate link berarti tidak ada kewajiban disclosure.
+Jika konten merupakan konten komersial/affiliate dan platform meminta disclosure, user harus dapat menandai/menjalankan disclosure sesuai platform.
+
+## 20. UI BASELINE
+Home hanya mempunyai dua pilihan utama:
+1. OTO
+2. AFFILIATE
+
+Tidak ada IMAGE mode.
+Tidak ada Video Studio yang membuat video.
+Tidak ada AI Processing pipeline untuk membaca gambar marketplace.
+
+UI inti:
+- Dashboard
+- OTO
+- Affiliate
+- Review/Approval
+- Schedule
+- Publishing History
+
+## 21. SUCCESS CRITERIA
+Baseline dianggap berjalan jika:
+1. User dapat membuat OTO dengan data kendaraan + 1 video.
+2. OTO tidak memiliki affiliate link.
+3. User dapat membuat AFFILIATE dengan 1 produk + 1 video + affiliate link.
+4. Satu video maksimal 20 detik dan maksimal 20 MB.
+5. Data persistent setelah refresh/reopen.
+6. User dapat Review dan Approval.
+7. User dapat Schedule.
+8. TikTok menerima video tanpa affiliate link.
+9. Facebook menerima video dengan affiliate link pada deskripsi/caption.
+10. YouTube menerima video dengan affiliate link pada deskripsi.
+11. Channel gagal secara independen dan dapat retry tanpa duplikasi.
+12. Reset Product dan Reset Content bekerja sesuai aturan.
+
+## 22. IMPLEMENTATION ORDER
+Bangun langsung berdasarkan baseline ini. Urutan:
+
+PHASE 1 — Foundation
+- Rapikan domain OTO/AFFILIATE.
+- Pastikan persistence Supabase.
+- Video-only media validation.
+- Product/Post relation.
+- Reset Product/Content.
+
+PHASE 2 — Metadata
+- Title.
+- Description.
+- Category.
+- Affiliate source/link untuk AFFILIATE.
+- Channel-specific caption variants.
+
+PHASE 3 — Review & Schedule
+- Review.
+- Approval.
+- Persistent scheduling.
+- Per-channel state.
+
+PHASE 4 — Publishing
+- Supabase Edge Function server-side integration.
+- Buffer publishing.
+- TikTok no-link rule.
+- Facebook/YouTube affiliate-link rule.
+- Idempotency/retry/logging.
+
+PHASE 5 — Verification
+- End-to-end OTO test.
+- End-to-end AFFILIATE test.
+- Refresh persistence test.
+- Reset test.
+- Per-channel publishing test.
+- Failure/retry test.
+
+## 23. HARD RULES
+- Jangan mengembalikan AppDeploy ke arsitektur.
+- Jangan mengembalikan IMAGE mode.
+- Jangan membangun AI video/image generation.
+- Jangan menjadikan Shopee/Lazada/Tokopedia/TikTok Shop sebagai publishing channel.
+- Jangan memasukkan affiliate link ke TikTok AFFILIATE.
+- Jangan menghapus affiliate link untuk Facebook/YouTube AFFILIATE.
+- Jangan memberi affiliate_link pada OTO.
+- Jangan meminta user menempelkan secret/API key ke chat.
+- Jangan mengarang fakta produk/kendaraan.
+- Jangan mengubah blueprint ini tanpa technical blocker nyata.
+
+## 24. BASELINE LOCK
+Dokumen ini adalah dasar implementasi MR.ONE — OTO & AFFILIATE.
+Semua pekerjaan pembangunan setelah ini harus mengikuti baseline ini.
+Jika ditemukan technical blocker, selesaikan dengan perubahan minimal yang menjaga tujuan dan aturan bisnis baseline.
